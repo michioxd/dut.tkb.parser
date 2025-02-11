@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/dut.tkb.parser/sw.js', { scope: '/dut.tkb.parser/' })})}
