@@ -261,7 +261,7 @@ export default function App() {
                                                     />
                                                 </Flex>
                                                 <Flex direction="row" gap="2">
-                                                    <Flex direction="column" gap="1">
+                                                    <Flex direction="column" gap="1" flexGrow="1">
                                                         <Text size="1">Thứ (2-8)</Text>
                                                         <TextField.Root
                                                             placeholder="Thứ (2-8)"
@@ -272,7 +272,7 @@ export default function App() {
                                                             onChange={(e) => setCustomData(prev => ({ ...prev, day: parseInt(e.target.value) || 2 }))}
                                                         />
                                                     </Flex>
-                                                    <Flex direction="column" gap="1">
+                                                    <Flex direction="column" gap="1" flexGrow="1">
                                                         <Text size="1">Từ tiết (1-10)</Text>
                                                         <TextField.Root
                                                             placeholder="Tiết (1-10)"
@@ -283,7 +283,7 @@ export default function App() {
                                                             onChange={(e) => setCustomData(prev => ({ ...prev, start: parseInt(e.target.value) || 1 }))}
                                                         />
                                                     </Flex>
-                                                    <Flex direction="column" gap="1">
+                                                    <Flex direction="column" gap="1" flexGrow="1">
                                                         <Text size="1">Đến (1-10)</Text>
                                                         <TextField.Root
                                                             placeholder="Tiết (1-10)"
