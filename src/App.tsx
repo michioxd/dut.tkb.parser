@@ -160,7 +160,7 @@ export default function App() {
                                 Chỉ hiển thị lịch học hôm nay
                             </Flex>
                         </Flex>
-                        <Flex align="center" gap="1">
+                        <Flex align="start" wrap="wrap" gap="1">
                             <Button
                                 color="red"
                                 variant="soft"
@@ -170,7 +170,9 @@ export default function App() {
                                     setWeek(0);
                                     setShowOnlyAvailable(false);
                                 }}
-                            >Reset</Button>
+                            >
+                                Reset
+                            </Button>
                             <Button
                                 variant="soft"
                                 disabled={scheduleData.length < 1}
@@ -188,10 +190,12 @@ export default function App() {
                                         link.remove();
                                     });
                                 }}
-                            >Lưu lại thành file ảnh</Button>
-                            <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">
-                                <Button variant="soft" color="cyan">Xem hướng dẫn</Button>
-                            </a>
+                            >
+                                Lưu lại thành file ảnh
+                            </Button>
+                            <Button variant="soft" color="cyan" asChild>
+                                <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">Xem hướng dẫn</a>
+                            </Button>
                         </Flex>
                     </Flex>
                 </Card>
