@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-import { Box, Button, Card, Checkbox, Container, Flex, Link, ScrollArea, Text, TextArea, TextField } from "@radix-ui/themes";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Box, Button, Card, Checkbox, Container, Flex, Link, Popover, ScrollArea, Text, TextArea, TextField } from "@radix-ui/themes";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Footer from "./components/Footer";
 import Parser, { TKBType } from "./core/parser";
 import timeRange from "./core/range";
@@ -34,6 +34,18 @@ import { useTheme } from "./context/ThemeContext";
 const genBg = (name: string): string =>
     `hsl(${name.split('').reduce((h, c) => (h + c.charCodeAt(0)) % 360, 0)}, 70%, 50%, 0.15)`;
 
+const initialCustomData = {
+    name: '',
+    subject: '',
+    instructor: '',
+    room: '',
+    day: 2,
+    start: 1,
+    end: 10,
+    weekFrom: 1,
+    weekTo: 2,
+}
+
 export default function App() {
     const { mode, setMode } = useTheme();
     const [byWeek, setByWeek] = useState(localStorage.getItem('byWeek') === 'true' || false);
@@ -43,6 +55,8 @@ export default function App() {
     const [data, setData] = useState(localStorage.getItem('data') || '');
     const tableRef = useRef<HTMLTableElement>(null);
     const [saving, setSaving] = useState(false);
+
+    const [customData, setCustomData] = useState(initialCustomData);
 
     useEffect(() => {
         localStorage.setItem('data', data);
@@ -77,6 +91,17 @@ export default function App() {
 
         return d;
     }, [data]);
+
+    const resetCustomForm = () => {
+        setCustomData(initialCustomData);
+    };
+
+    const addCustomLesson = useCallback(() => {
+        if (!customData.name || !customData.instructor || !customData.room) return;
+        const customLessonString = `99\t1234567.1234.12.34\t${customData.name}\t3\t\t\t${customData.instructor}\tThứ ${customData.day},${customData.start}-${customData.end},${customData.room}\t${customData.weekFrom}-${customData.weekTo}`;
+        setData(prev => prev + '\n' + customLessonString);
+        resetCustomForm();
+    }, [customData]);
 
     const dt = useMemo(() => (
         <>
@@ -202,6 +227,121 @@ export default function App() {
                                 >
                                     Lưu thành ảnh
                                 </Button>
+                                <Popover.Root>
+                                    <Popover.Trigger>
+                                        <Button variant="soft" color="green">
+                                            Thêm lịch tuỳ chỉnh
+                                        </Button>
+                                    </Popover.Trigger>
+                                    <Popover.Content width="360px">
+                                        <Flex gap="3" direction="column">
+                                            <Flex direction="column" gap="2">
+                                                <Flex direction="column" gap="1">
+                                                    <Text size="1">Tên môn học</Text>
+                                                    <TextField.Root
+                                                        placeholder="Tên môn học"
+                                                        value={customData.name}
+                                                        onChange={(e) => setCustomData(prev => ({ ...prev, name: e.target.value }))}
+                                                    />
+                                                </Flex>
+                                                <Flex direction="column" gap="1">
+                                                    <Text size="1">Tên giảng viên</Text>
+                                                    <TextField.Root
+                                                        placeholder="Tên giảng viên"
+                                                        value={customData.instructor}
+                                                        onChange={(e) => setCustomData(prev => ({ ...prev, instructor: e.target.value }))}
+                                                    />
+                                                </Flex>
+                                                <Flex direction="column" gap="1">
+                                                    <Text size="1">Phòng</Text>
+                                                    <TextField.Root
+                                                        placeholder="Phòng"
+                                                        value={customData.room}
+                                                        onChange={(e) => setCustomData(prev => ({ ...prev, room: e.target.value }))}
+                                                    />
+                                                </Flex>
+                                                <Flex direction="row" gap="2">
+                                                    <Flex direction="column" gap="1">
+                                                        <Text size="1">Thứ (2-8)</Text>
+                                                        <TextField.Root
+                                                            placeholder="Thứ (2-8)"
+                                                            type="number"
+                                                            min="2"
+                                                            max="8"
+                                                            value={customData.day}
+                                                            onChange={(e) => setCustomData(prev => ({ ...prev, day: parseInt(e.target.value) || 2 }))}
+                                                        />
+                                                    </Flex>
+                                                    <Flex direction="column" gap="1">
+                                                        <Text size="1">Từ tiết (1-10)</Text>
+                                                        <TextField.Root
+                                                            placeholder="Tiết (1-10)"
+                                                            type="number"
+                                                            min="1"
+                                                            max="10"
+                                                            value={customData.start}
+                                                            onChange={(e) => setCustomData(prev => ({ ...prev, start: parseInt(e.target.value) || 1 }))}
+                                                        />
+                                                    </Flex>
+                                                    <Flex direction="column" gap="1">
+                                                        <Text size="1">Đến (1-10)</Text>
+                                                        <TextField.Root
+                                                            placeholder="Tiết (1-10)"
+                                                            type="number"
+                                                            min="1"
+                                                            max="10"
+                                                            value={customData.end}
+                                                            onChange={(e) => setCustomData(prev => ({ ...prev, end: parseInt(e.target.value) || 10 }))}
+                                                        />
+                                                    </Flex>
+                                                </Flex>
+                                                <Flex direction="row" gap="2">
+                                                    <Flex direction="column" gap="1">
+                                                        <Text size="1">Từ tuần</Text>
+                                                        <TextField.Root
+                                                            placeholder="Tuần"
+                                                            type="number"
+                                                            min="1"
+                                                            value={customData.weekFrom}
+                                                            onChange={(e) => setCustomData(prev => ({ ...prev, weekFrom: parseInt(e.target.value) || 1 }))}
+                                                        />
+                                                    </Flex>
+                                                    <Flex direction="column" gap="1">
+                                                        <Text size="1">Đến tuần</Text>
+                                                        <TextField.Root
+                                                            placeholder="Tuần"
+                                                            type="number"
+                                                            min="1"
+                                                            value={customData.weekTo}
+                                                            onChange={(e) => setCustomData(prev => ({ ...prev, weekTo: parseInt(e.target.value) || 2 }))}
+                                                        />
+                                                    </Flex>
+                                                </Flex>
+                                            </Flex>
+                                            <Flex direction="row" gap="2" flexGrow="1">
+                                                <Popover.Close>
+                                                    <Button
+                                                        variant="soft"
+                                                        style={{ flexGrow: 1 }}
+                                                        onClick={addCustomLesson}
+                                                        disabled={!customData.name || !customData.instructor || !customData.room}
+                                                    >
+                                                        Thêm
+                                                    </Button>
+                                                </Popover.Close>
+                                                <Button
+                                                    variant="soft"
+                                                    color="red"
+                                                    style={{ flexGrow: 1 }}
+                                                    onClick={resetCustomForm}
+                                                >
+                                                    Reset
+                                                </Button>
+                                            </Flex>
+                                        </Flex>
+                                    </Popover.Content>
+                                </Popover.Root>
+
                                 <Button variant="soft" color="cyan" asChild>
                                     <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">Xem hướng dẫn</a>
                                 </Button>
