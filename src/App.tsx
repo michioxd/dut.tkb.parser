@@ -22,22 +22,27 @@
  * SOFTWARE.
  */
 
-import { Box, Button, Card, Checkbox, Container, Flex, Link, Text, TextArea, TextField } from "@radix-ui/themes";
+import { Box, Button, Card, Checkbox, Container, Flex, Link, ScrollArea, Text, TextArea, TextField } from "@radix-ui/themes";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Footer from "./components/Footer";
 import Parser, { TKBType } from "./core/parser";
 import timeRange from "./core/range";
 import html2canvas from "html2canvas-pro";
 import tbCls from "./table.module.scss";
-// import NextLession from "./components/NextLesson";
+import { useTheme } from "./context/ThemeContext";
+
+const genBg = (name: string): string =>
+    `hsl(${name.split('').reduce((h, c) => (h + c.charCodeAt(0)) % 360, 0)}, 70%, 50%, 0.15)`;
 
 export default function App() {
+    const { mode, setMode } = useTheme();
     const [byWeek, setByWeek] = useState(localStorage.getItem('byWeek') === 'true' || false);
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(localStorage.getItem('showOnlyAvailable') === 'true' || false);
     const [onlyToday, setOnlyToday] = useState(localStorage.getItem('onlyToday') === 'true' || false);
     const [week, setWeek] = useState(localStorage.getItem('week') ? Number(localStorage.getItem('week')) : 0);
     const [data, setData] = useState(localStorage.getItem('data') || '');
     const tableRef = useRef<HTMLTableElement>(null);
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         localStorage.setItem('data', data);
@@ -80,7 +85,7 @@ export default function App() {
             )).map((time, tr) => (
                 <tr key={tr}>
                     <td>
-                        <Text size="1" style={{ fontSize: '12px', color: 'gray' }} color="gray">Tiết {time.lessonNumber}</Text>
+                        <Text size="1" style={{ fontSize: '12px' }} color="gray">Tiết {time.lessonNumber}</Text>
                         <br />
                         <Text>{time.start} - {time.end}</Text>
                     </td>
@@ -90,11 +95,12 @@ export default function App() {
                                 d.time.some(t => t.date === day && t.lsStart <= time.lessonNumber && t.lsEnd >= time.lessonNumber && (!byWeek || d.weekRange.some(wr => wr.from <= week && wr.to >= week)))
                             ).map((d, ind) => (
                                 <Box className={tbCls.card}
-                                    key={d.id + day + ind}>
+                                    key={d.id + day + ind}
+                                    style={{ backgroundColor: genBg(d.name) }}>
                                     <Box style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
-                                        <Text>{d.name}</Text>
-                                        <Text size="1" style={{ fontSize: '10px', color: 'grey' }} color="gray">{d.instructor}</Text>
-                                        <Text size="1" style={{ fontSize: '12px', color: 'gray' }} color="gray">{d.time.filter(t => t.date === day && t.lsStart <= time.lessonNumber && t.lsEnd >= time.lessonNumber).map(t => t.class).join(', ')}</Text>
+                                        <Text size="3" weight="medium">{d.name}</Text>
+                                        <Text size="1" style={{ fontSize: '10px' }} color="gray">{d.instructor}</Text>
+                                        <Text size="1" style={{ fontSize: '12px' }} color="gray">{d.time.filter(t => t.date === day && t.lsStart <= time.lessonNumber && t.lsEnd >= time.lessonNumber).map(t => t.class).join(', ')}</Text>
                                     </Box>
                                 </Box>
                             ))}
@@ -160,51 +166,55 @@ export default function App() {
                                 Chỉ hiển thị lịch học hôm nay
                             </Flex>
                         </Flex>
-                        <Flex align="start" wrap="wrap" gap="1">
-                            <Button
-                                color="red"
-                                variant="soft"
-                                onClick={() => {
-                                    setData('');
-                                    setByWeek(false);
-                                    setWeek(0);
-                                    setShowOnlyAvailable(false);
-                                }}
-                            >
-                                Reset
-                            </Button>
-                            <Button
-                                variant="soft"
-                                disabled={scheduleData.length < 1}
-                                onClick={() => {
-                                    if (!tableRef.current) return;
+                        <Flex align="start" wrap="wrap" gap="1" justify="between">
+                            <Flex align="start" wrap="wrap" gap="1">
+                                <Button
+                                    color="red"
+                                    variant="soft"
+                                    onClick={() => {
+                                        setData('');
+                                        setByWeek(false);
+                                        setWeek(0);
+                                        setShowOnlyAvailable(false);
+                                    }}
+                                >
+                                    Reset
+                                </Button>
+                                <Button
+                                    variant="soft"
+                                    disabled={scheduleData.length < 1 || saving}
+                                    loading={saving}
+                                    onClick={() => {
+                                        if (!tableRef.current) return;
 
-                                    html2canvas(tableRef.current, {
-                                        allowTaint: true,
-                                        backgroundColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#212225' : '#fff',
-                                    }).then(function (canvas) {
-                                        const link = document.createElement('a');
-                                        link.download = 'dut.tkb.parser-' + Date.now() + '.png';
-                                        link.href = canvas.toDataURL('image/png');
-                                        link.click();
-                                        link.remove();
-                                    });
-                                }}
-                            >
-                                Lưu lại thành file ảnh
-                            </Button>
-                            <Button variant="soft" color="cyan" asChild>
-                                <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">Xem hướng dẫn</a>
+                                        setSaving(true);
+                                        html2canvas(tableRef.current, {
+                                            allowTaint: true,
+                                            backgroundColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#212225' : '#fff',
+                                        }).then(function (canvas) {
+                                            const link = document.createElement('a');
+                                            link.download = 'dut.tkb.parser-' + Date.now() + '.png';
+                                            link.href = canvas.toDataURL('image/png');
+                                            link.click();
+                                            link.remove();
+                                        }).finally(() => setSaving(false));
+                                    }}
+                                >
+                                    Lưu thành ảnh
+                                </Button>
+                                <Button variant="soft" color="cyan" asChild>
+                                    <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">Xem hướng dẫn</a>
+                                </Button>
+                            </Flex>
+                            <Button variant="soft" color="gray" onClick={() => setMode(mode === 'system' ? 'dark' : mode === 'dark' ? 'light' : 'system')}>
+                                Chủ đề: {mode === 'system' ? 'Tự động' : mode === 'dark' ? 'Tối' : 'Sáng'}
                             </Button>
                         </Flex>
                     </Flex>
                 </Card>
-                {/* <Card my="3" mx="3" style={{ width: 'calc(100% - 2rem)', padding: '1.5rem' }}>
-                    <NextLession data={scheduleData} />
-                </Card> */}
             </Container>
             {scheduleData.length > 0 &&
-                <Box mx="3" style={{ width: 'calc(100% - 2rem)', overflow: 'auto' }}>
+                <ScrollArea mx="3" style={{ width: 'calc(100% - 2rem)' }}>
                     <table className={tbCls.table} ref={tableRef}>
                         <thead>
                             <tr>
@@ -220,7 +230,7 @@ export default function App() {
                             {dt}
                         </tbody>
                     </table>
-                </Box>
+                </ScrollArea>
             }
             <Footer />
         </>

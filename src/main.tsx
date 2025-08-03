@@ -32,20 +32,32 @@ import "@fontsource/inter/700.css";
 import './index.scss';
 import App from './App'
 import { Theme } from '@radix-ui/themes';
+import { ThemeProvider } from './context/ThemeContext';
 
 // why we need lint for main file heh?
 // eslint-disable-next-line react-refresh/only-export-components
 const ThemeMatcher = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<'dark' | 'light'>(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const [mode, setMode] = useState<'dark' | 'light' | 'system'>(localStorage.getItem('mode') as 'dark' | 'light' | 'system' || 'system');
+  const [theme, setTheme] = useState<'dark' | 'light'>(mode === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
 
   useEffect(() => {
+    if (mode !== 'system') {
+      return;
+    }
     const matcher = window.matchMedia('(prefers-color-scheme: dark)');
     const listener = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
     matcher.addEventListener('change', listener);
     return () => matcher.removeEventListener('change', listener);
-  }, []);
+  }, [mode]);
 
-  return <Theme appearance={theme}>{children}</Theme>;
+  useEffect(() => {
+    localStorage.setItem('mode', mode);
+    setTheme(mode === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
+  }, [mode]);
+
+  return <ThemeProvider value={{ mode, setMode }}>
+    <Theme appearance={theme}>{children}</Theme>
+  </ThemeProvider>
 }
 
 createRoot(document.getElementById('root')!).render(
