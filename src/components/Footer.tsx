@@ -32,7 +32,7 @@ export default function Footer() {
             <Text size="1" color="gray" style={{ textAlign: 'center' }}>
                 <Link target="_blank" color="gray" href="https://github.com/michioxd/dut.tkb.parser">GitHub</Link> - <Link target="_blank" color="gray" href="https://github.com/michioxd/dut.tkb.parser/blob/main/LICENSE">MIT License</Link>
                 <br />
-                &copy; {(new Date()).getUTCFullYear()} <Link target="_blank" color="gray" href="https://michioxd.ch">michioxd</Link> powered.
+                &copy; {(new Date()).getUTCFullYear()} <Link target="_blank" color="gray" href="https://michioxd.ch">michioxd</Link> powered. say thanks? no need, just enjoy.
             </Text>
         </Flex>
     )
