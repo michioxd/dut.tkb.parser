@@ -10,10 +10,10 @@ git clone https://github.com/michioxd/dut.tkb.parser
 
 # Install dependencies
 cd dut.tkb.parser
-pnpm i
+bun i
 
 # Run the development server
-pnpm dev
+bun dev
 ```
 
 ## License
