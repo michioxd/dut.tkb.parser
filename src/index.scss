@@ -15,6 +15,11 @@ body {
 .radix-themes {
     --default-font-family: 'Inter', sans-serif;
     --heading-font-family: 'Inter', sans-serif;
+    --table-bg: #fff;
+
+    &.dark {
+        --table-bg: #18191b;
+    }
 }
 
 ::-webkit-scrollbar {

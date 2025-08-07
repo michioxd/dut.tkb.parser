@@ -6,7 +6,7 @@
     position: relative;
     border-radius: calc(var(--tb-border) - 1px);
     border: 1px solid var(--gray-a5);
-    background-color: var(--color-panel);
+    background-color: var(--table-bg);
     table-layout: auto;
 
     thead {
