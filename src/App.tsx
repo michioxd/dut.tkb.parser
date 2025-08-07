@@ -127,6 +127,40 @@ export default function App() {
             window.removeEventListener('resize', handleResize);
         };
     }, [autoFit]);
+
+    const handleSaveImage = useCallback(async () => {
+        if (!tableRef.current) return;
+        setSaving(true);
+
+        const table = tableRef.current;
+
+        let zoom = 1;
+        if (autoFit) {
+            zoom = zoomRatio;
+            setZoomRatio(1);
+            await new Promise(resolve => setTimeout(resolve, 100)); // wait for the table to be resized
+        }
+
+        try {
+            const canvas = await html2canvas(table, {
+                allowTaint: true,
+                backgroundColor: null,
+            });
+
+            const link = document.createElement('a');
+            link.download = 'dut.tkb.parser-' + Date.now() + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            link.remove();
+            canvas.remove();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setSaving(false);
+            if (autoFit) setZoomRatio(zoom);
+        }
+    }, [autoFit, zoomRatio, tableRef]);
+
     const addCustomLesson = useCallback(() => {
         if (!customData.name || !customData.instructor || !customData.room) return;
         const customLessonString = `99\t1234567.1234.12.34\t${customData.name}\t3\t\t\t${customData.instructor}\tThứ ${customData.day},${customData.start}-${customData.end},${customData.room}\t${customData.weekFrom}-${customData.weekTo}`;
@@ -273,21 +307,7 @@ export default function App() {
                                     variant="soft"
                                     disabled={scheduleData.length < 1 || saving}
                                     loading={saving}
-                                    onClick={() => {
-                                        if (!tableRef.current) return;
-
-                                        setSaving(true);
-                                        html2canvas(tableRef.current, {
-                                            allowTaint: true,
-                                            backgroundColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#212225' : '#fff',
-                                        }).then(function (canvas) {
-                                            const link = document.createElement('a');
-                                            link.download = 'dut.tkb.parser-' + Date.now() + '.png';
-                                            link.href = canvas.toDataURL('image/png');
-                                            link.click();
-                                            link.remove();
-                                        }).finally(() => setSaving(false));
-                                    }}
+                                    onClick={handleSaveImage}
                                 >
                                     <DownloadIcon />
                                     Lưu thành ảnh
