@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { Box, Button, Card, Checkbox, Container, Flex, Link, Popover, ScrollArea, Text, TextArea, TextField } from "@radix-ui/themes";
+import { Box, Button, Card, Checkbox, Container, Flex, IconButton, Link, Popover, ScrollArea, Text, TextArea, TextField, Tooltip } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Footer from "./components/Footer";
 import Parser, { TKBType } from "./core/parser";
@@ -30,6 +30,7 @@ import timeRange from "./core/range";
 import html2canvas from "html2canvas-pro";
 import tbCls from "./table.module.scss";
 import { useTheme } from "./context/ThemeContext";
+import { CircleIcon, DoubleArrowDownIcon, DoubleArrowUpIcon, DownloadIcon, ExternalLinkIcon, MoonIcon, PlusIcon, ResetIcon, SunIcon } from "@radix-ui/react-icons";
 
 const genBg = (name: string): string =>
     `hsl(${name.split('').reduce((h, c) => (h + c.charCodeAt(0)) % 360, 0)}, 70%, 50%, 0.15)`;
@@ -51,10 +52,13 @@ export default function App() {
     const [byWeek, setByWeek] = useState(localStorage.getItem('byWeek') === 'true' || false);
     const [showOnlyAvailable, setShowOnlyAvailable] = useState(localStorage.getItem('showOnlyAvailable') === 'true' || false);
     const [onlyToday, setOnlyToday] = useState(localStorage.getItem('onlyToday') === 'true' || false);
-    const [week, setWeek] = useState(localStorage.getItem('week') ? Number(localStorage.getItem('week')) : 0);
+    const [week, setWeek] = useState(localStorage.getItem('week') ? Number(localStorage.getItem('week')) : 1);
     const [data, setData] = useState(localStorage.getItem('data') || '');
+    const [autoFit, setAutoFit] = useState(localStorage.getItem('autoFit') === 'true' || false);
     const tableRef = useRef<HTMLTableElement>(null);
     const [saving, setSaving] = useState(false);
+    const [hidePanel, setHidePanel] = useState(localStorage.getItem('hidePanel') === 'true' || false);
+    const [zoomRatio, setZoomRatio] = useState(1);
 
     const [customData, setCustomData] = useState(initialCustomData);
 
@@ -78,6 +82,14 @@ export default function App() {
         localStorage.setItem('onlyToday', onlyToday.toString());
     }, [onlyToday]);
 
+    useEffect(() => {
+        localStorage.setItem('autoFit', autoFit.toString());
+    }, [autoFit]);
+
+    useEffect(() => {
+        localStorage.setItem('hidePanel', hidePanel.toString());
+    }, [hidePanel]);
+
     const scheduleData = useMemo<TKBType[]>(() => {
         const d: TKBType[] = [];
         data.replace(/\r\n/g, "\n").split('\n').map((line) => {
@@ -96,6 +108,25 @@ export default function App() {
         setCustomData(initialCustomData);
     };
 
+    useEffect(() => {
+        if (!tableRef.current) return;
+
+        const handleResize = () => {
+            if (!tableRef.current) return;
+            const tableWidth = tableRef.current.offsetWidth;
+            const screenWidth = window.innerWidth - 42;
+            const zoomRatio = Math.min(1, screenWidth / tableWidth);
+            setZoomRatio(zoomRatio);
+        };
+
+        handleResize();
+
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [autoFit]);
     const addCustomLesson = useCallback(() => {
         if (!customData.name || !customData.instructor || !customData.room) return;
         const customLessonString = `99\t1234567.1234.12.34\t${customData.name}\t3\t\t\t${customData.instructor}\tThứ ${customData.day},${customData.start}-${customData.end},${customData.room}\t${customData.weekFrom}-${customData.weekTo}`;
@@ -138,15 +169,15 @@ export default function App() {
 
     return (
         <>
-            <Container>
-                <Card my="3" mx="3" style={{ width: 'calc(100% - 2rem)', padding: '1.5rem' }}>
+            <Container size="4">
+                <Card my="3" mx="3" style={{ width: 'calc(100% - 2rem)', padding: '1.5rem', display: scheduleData.length > 0 && hidePanel ? 'none' : 'block' }}>
                     <Flex direction="column" gap="1">
                         <Text size='6'>
                             Tạo thời khoá biểu
                             <Text as="span" ml="1" size="1" color="gray">for <Link color="gray" href="https://dut.udn.vn">DUT</Link> students</Text>
                         </Text>
                         <Text size='2' color="gray">
-                            Truy c&#x1EAD;p v&agrave;o trang <b>Sinh vi&ecirc;n &gt; C&aacute; nh&acirc;n &gt; L&#x1ECB;ch h&#x1ECD;c, thi &amp; kh&#x1EA3;o s&aacute;t &yacute; ki&#x1EBF;n</b>, sau đ&oacute; copy b&#x1EA3;ng l&#x1ECB;ch h&#x1ECD;c v&agrave;o đ&acirc;y. <Link target="_blank" href="https://youtu.be/wiavNgTzB9o">Xem video hướng dẫn</Link>.
+                            Truy c&#x1EAD;p v&agrave;o trang <b><Link href="https://sv.dut.udn.vn/PageLichTH.aspx" target="_blank">Sinh vi&ecirc;n &gt; C&aacute; nh&acirc;n &gt; L&#x1ECB;ch h&#x1ECD;c, thi &amp; kh&#x1EA3;o s&aacute;t &yacute; ki&#x1EBF;n</Link></b>, sau đ&oacute; copy b&#x1EA3;ng l&#x1ECB;ch h&#x1ECD;c v&agrave;o đ&acirc;y. <Link target="_blank" href="https://youtu.be/wiavNgTzB9o">Xem video hướng dẫn</Link>.
                             <br />
                             Tất cả các khâu xử lí đều được thực hiện hoàn toàn trên trình duyệt của bạn không thông qua máy chủ thứ 3 nào. Thời khoá biểu đã nhập sẽ tự động lưu vào bộ nhớ của trình duyệt.
                         </Text>
@@ -157,10 +188,10 @@ export default function App() {
                             style={{ margin: '1rem 0', fontSize: '12px', height: '200px', fontFamily: 'monospace, Consolas, source-code-pro, Menlo, Monaco, Lucida Console, Courier New, sans-serif' }} resize="vertical" placeholder="Dán bảng đã copy vào đây..." />
                         <Flex align={{
                             initial: 'start',
-                            sm: 'center'
+                            md: 'center'
                         }} gap="2" style={{ marginBottom: '1rem' }} direction={{
                             initial: 'column',
-                            sm: 'row'
+                            md: 'row'
                         }}>
                             <Flex gap="2" align="center">
                                 <Checkbox
@@ -172,6 +203,7 @@ export default function App() {
                                     disabled={!byWeek}
                                     style={{ width: '3rem' }}
                                     value={week}
+                                    min={1}
                                     onChange={(e) => setWeek(Number(e.currentTarget.value))}
                                     size="1" type="number" placeholder="Tuần"
                                 />
@@ -190,21 +222,53 @@ export default function App() {
                                 />
                                 Chỉ hiển thị lịch học hôm nay
                             </Flex>
+                            <Flex gap="2" align="center">
+                                <Checkbox
+                                    checked={autoFit}
+                                    onCheckedChange={(e) => setAutoFit(Boolean(e))}
+                                />
+                                Tự động fit với màn hình
+                            </Flex>
                         </Flex>
                         <Flex align="start" wrap="wrap" gap="1" justify="between">
                             <Flex align="start" wrap="wrap" gap="1">
-                                <Button
-                                    color="red"
-                                    variant="soft"
-                                    onClick={() => {
-                                        setData('');
-                                        setByWeek(false);
-                                        setWeek(0);
-                                        setShowOnlyAvailable(false);
-                                    }}
-                                >
-                                    Reset
-                                </Button>
+                                <Popover.Root>
+                                    <Popover.Trigger>
+                                        <Button
+                                            color="red"
+                                            variant="soft"
+                                        >
+                                            <ResetIcon />
+                                            Reset
+                                        </Button>
+                                    </Popover.Trigger>
+                                    <Popover.Content width="360px" size="1">
+                                        <Text size="1">Bạn có chắc chắn muốn reset tất cả các tuỳ chọn không?</Text>
+                                        <Flex direction="row" gap="2" flexGrow="1" mt="2">
+                                            <Popover.Close>
+                                                <Button size="1" variant="soft" color="red" style={{ flexGrow: 1 }} onClick={() => {
+                                                    setData('');
+                                                    setByWeek(false);
+                                                    setWeek(1);
+                                                    setShowOnlyAvailable(false);
+                                                    setOnlyToday(false);
+                                                    setAutoFit(false);
+                                                    setHidePanel(false);
+                                                    setCustomData(initialCustomData);
+                                                    setZoomRatio(1);
+                                                    setMode('system');
+                                                }}>
+                                                    Có
+                                                </Button>
+                                            </Popover.Close>
+                                            <Popover.Close>
+                                                <Button size="1" variant="soft" color="green" style={{ flexGrow: 1 }}>
+                                                    Không
+                                                </Button>
+                                            </Popover.Close>
+                                        </Flex>
+                                    </Popover.Content>
+                                </Popover.Root>
                                 <Button
                                     variant="soft"
                                     disabled={scheduleData.length < 1 || saving}
@@ -225,11 +289,13 @@ export default function App() {
                                         }).finally(() => setSaving(false));
                                     }}
                                 >
+                                    <DownloadIcon />
                                     Lưu thành ảnh
                                 </Button>
                                 <Popover.Root>
                                     <Popover.Trigger>
                                         <Button variant="soft" color="green">
+                                            <PlusIcon />
                                             Thêm lịch tuỳ chỉnh
                                         </Button>
                                     </Popover.Trigger>
@@ -326,6 +392,7 @@ export default function App() {
                                                         onClick={addCustomLesson}
                                                         disabled={!customData.name || !customData.instructor || !customData.room}
                                                     >
+                                                        <PlusIcon />
                                                         Thêm
                                                     </Button>
                                                 </Popover.Close>
@@ -335,27 +402,35 @@ export default function App() {
                                                     style={{ flexGrow: 1 }}
                                                     onClick={resetCustomForm}
                                                 >
+                                                    <ResetIcon />
                                                     Reset
                                                 </Button>
                                             </Flex>
                                         </Flex>
                                     </Popover.Content>
                                 </Popover.Root>
-
                                 <Button variant="soft" color="cyan" asChild>
-                                    <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">Xem hướng dẫn</a>
+                                    <a href="https://youtu.be/wiavNgTzB9o" target="_blank" rel="noreferrer">Xem hướng dẫn <ExternalLinkIcon /></a>
                                 </Button>
                             </Flex>
-                            <Button variant="soft" color="gray" onClick={() => setMode(mode === 'system' ? 'dark' : mode === 'dark' ? 'light' : 'system')}>
-                                Chủ đề: {mode === 'system' ? 'Tự động' : mode === 'dark' ? 'Tối' : 'Sáng'}
-                            </Button>
+                            <Tooltip content={`Chủ đề: ${mode === 'system' ? 'Tự động' : mode === 'dark' ? 'Tối' : 'Sáng'}`}>
+                                <IconButton variant="soft" color="gray" onClick={() => setMode(mode === 'system' ? 'dark' : mode === 'dark' ? 'light' : 'system')}>
+                                    {mode === 'system' ? <CircleIcon /> : mode === 'dark' ? <MoonIcon /> : <SunIcon />}
+                                </IconButton>
+                            </Tooltip>
                         </Flex>
                     </Flex>
                 </Card>
+                {scheduleData.length > 0 &&
+                    <Button variant="ghost" style={{ width: '100%' }} mb="3" color="gray" onClick={() => setHidePanel(!hidePanel)}>
+                        {hidePanel ? <DoubleArrowDownIcon /> : <DoubleArrowUpIcon />}
+                        {hidePanel ? 'Hiện tuỳ chọn' : 'Ẩn tuỳ chọn'}
+                    </Button>
+                }
             </Container>
             {scheduleData.length > 0 &&
                 <ScrollArea mx="3" style={{ width: 'calc(100% - 2rem)' }}>
-                    <table className={tbCls.table} ref={tableRef}>
+                    <table className={tbCls.table} ref={tableRef} style={autoFit ? { zoom: zoomRatio } : {}}>
                         <thead>
                             <tr>
                                 <th> </th>
