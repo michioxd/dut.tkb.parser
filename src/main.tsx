@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import { ReactNode, StrictMode, useEffect, useState } from "react";
+import { ReactNode, StrictMode, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "@radix-ui/themes/styles.css";
 import "@fontsource/inter/300.css";
@@ -40,25 +40,24 @@ const ThemeMatcher = ({ children }: { children: ReactNode }) => {
     const [mode, setMode] = useState<"dark" | "light" | "system">(
         (localStorage.getItem("mode") as "dark" | "light" | "system") || "system",
     );
-    const [theme, setTheme] = useState<"dark" | "light">(
-        mode === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : mode,
+    const [systemTheme, setSystemTheme] = useState<"dark" | "light">(
+        window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light",
     );
+
+    const theme = useMemo(() => (mode === "system" ? systemTheme : mode), [mode, systemTheme]);
 
     useEffect(() => {
         if (mode !== "system") {
             return;
         }
         const matcher = window.matchMedia("(prefers-color-scheme: dark)");
-        const listener = (e: MediaQueryListEvent) => setTheme(e.matches ? "dark" : "light");
+        const listener = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? "dark" : "light");
         matcher.addEventListener("change", listener);
         return () => matcher.removeEventListener("change", listener);
     }, [mode]);
 
     useEffect(() => {
         localStorage.setItem("mode", mode);
-        setTheme(
-            mode === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : mode,
-        );
     }, [mode]);
 
     return (
