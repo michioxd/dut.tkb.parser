@@ -58,6 +58,7 @@ import {
     ResetIcon,
     SunIcon,
 } from "@radix-ui/react-icons";
+import { Base64 } from "js-base64";
 
 const genBg = (name: string): string =>
     `hsl(${name.split("").reduce((h, c) => (h + c.charCodeAt(0)) % 360, 0)}, 70%, 50%, 0.15)`;
@@ -288,6 +289,24 @@ export default function App() {
         ),
         [week, byWeek, scheduleData, showOnlyAvailable, onlyToday],
     );
+
+    useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+        const dataParam = query.get("data");
+        if (dataParam) {
+            setData(Base64.decode(dataParam));
+            query.delete("data");
+            window.history.replaceState(
+                {},
+                document.title,
+                window.location.protocol +
+                    "//" +
+                    window.location.host +
+                    window.location.pathname +
+                    (query.toString() ? "?" + query.toString() : ""),
+            );
+        }
+    }, []);
 
     return (
         <>
