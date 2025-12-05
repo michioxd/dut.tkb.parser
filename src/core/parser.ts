@@ -38,10 +38,21 @@ export interface TKBType {
     }[];
 }
 
+const dkRegex =
+    /^(?:(\d+)\t)?(?:([A-Za-z0-9.^\t]+)\t)?([^\t]+)\t(?:[^\t]*\t){1}([^\t]+)\t((?:(?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[:,]\s*\d+-\d+,[^\t;]+|(?:\d+:\s*\d+-\d+,[^\t;]+))+(?:;(?:\s*(?:Thứ \d+[,:]\s*|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt][,:]\s*)?(?:\d+:\s*)?\d+-\d+,[^\t;]+))*)\t([\d+-;]+)/;
+
 const global =
     /^(?:(\d+)\t)?(?:([A-Za-z0-9.^\t]+)\t)?([^\t]+)\t(?:[^\t]*\t){3}([^\t]+)\t((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),\d+-\d+,[^\t]+)\t([\d+-;]+)/;
 
-const rgx = {
+const dkRgx = {
+    id: /^(?=.*\d)(?=.*\.)[A-Za-z0-9.]+$/g,
+    dates: /((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[:,]\s*\d+-\d+,[^\t;]+|(?:\d+):\s*\d+-\d+,[^\t;]+)/gm,
+    date: /(?:Thứ (\d+)|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[,:]?\s*(\d+)-(\d+),(.+)$|^(\d+):\s*(\d+)-(\d+),(.+)$/,
+    weekRange: /(\d+)-(\d+)/,
+    weeksRange: /[\d+-;]+/,
+};
+
+const svRgx = {
     id: /^(?=.*\d)(?=.*\.)[A-Za-z0-9.]+$/g,
     dates: /((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),\d+-\d+,[^\t;]+)/gm,
     date: /(?:Thứ (\d+)|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),(\d+)-(\d+),(.+)$/,
@@ -56,12 +67,22 @@ export default function Parser(s: string): TKBType | null {
     const time: TKBType["time"] = [],
         weekRange: TKBType["weekRange"] = [];
 
-    const match = global.exec(s);
+    let dkMatched = false;
+    let match = global.exec(s);
+
+    if (!match) {
+        dkMatched = true;
+        match = dkRegex.exec(s);
+    }
 
     if (!match) return null;
 
+    console.log("Matched with:", dkMatched ? "DK" : "SV", match);
+
     for (let i = 1; i < match.length; i++) {
         if (!match[i]) continue;
+
+        const rgx = dkMatched ? dkRgx : svRgx;
 
         const idMatch = match[i].match(rgx.id);
         if (!idMatch) continue;
