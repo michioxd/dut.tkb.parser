@@ -25,6 +25,7 @@
 import {
     Box,
     Button,
+    Callout,
     Card,
     Checkbox,
     Container,
@@ -51,6 +52,7 @@ import {
     DoubleArrowUpIcon,
     DownloadIcon,
     ExternalLinkIcon,
+    InfoCircledIcon,
     MoonIcon,
     PlusIcon,
     ResetIcon,
@@ -327,6 +329,14 @@ export default function App() {
                             Tất cả các khâu xử lí đều được thực hiện hoàn toàn trên trình duyệt của bạn không thông qua
                             máy chủ thứ 3 nào. Thời khoá biểu đã nhập sẽ tự động lưu vào bộ nhớ của trình duyệt.
                         </Text>
+                        <Callout.Root color="green" size="1">
+                            <Callout.Icon>
+                                <InfoCircledIcon />
+                            </Callout.Icon>
+                            <Callout.Text>
+                                <b>Cập nhật 5/12/2025:</b> Đã hỗ trợ thời khoá biểu từ website đăng ký học phần.
+                            </Callout.Text>
+                        </Callout.Root>
                         <TextArea
                             size="1"
                             value={data}
