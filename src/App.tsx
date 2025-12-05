@@ -54,6 +54,7 @@ import {
     ExternalLinkIcon,
     InfoCircledIcon,
     MoonIcon,
+    OpenInNewWindowIcon,
     PlusIcon,
     ResetIcon,
     SunIcon,
@@ -638,6 +639,14 @@ export default function App() {
                                 </IconButton>
                             </Tooltip>
                         </Flex>
+                        <Link
+                            size="1"
+                            href="https://gist.github.com/michioxd/91a580d34a3478c8985309758e150b93"
+                            target="_blank"
+                            style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
+                        >
+                            better dkDUT (user script) <OpenInNewWindowIcon />
+                        </Link>
                     </Flex>
                 </Card>
                 {scheduleData.length > 0 && (
