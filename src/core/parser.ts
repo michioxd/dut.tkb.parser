@@ -47,7 +47,7 @@ const global =
 const dkRgx = {
     id: /^(?=.*\d)(?=.*\.)[A-Za-z0-9.]+$/g,
     dates: /((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[:,]\s*\d+-\d+,[^\t;]+|(?:\d+):\s*\d+-\d+,[^\t;]+)/gm,
-    date: /(?:Thứ (\d+)|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[,:]?\s*(\d+)-(\d+),(.+)$|^(\d+):\s*(\d+)-(\d+),(.+)$/,
+    date: /(?:Thứ )?(\d+)[,:]?\s*(\d+)-(\d+),(.+)$|^(\d+):\s*(\d+)-(\d+),(.+)$/,
     weekRange: /(\d+)-(\d+)/,
     weeksRange: /[\d+-;]+/,
 };
@@ -76,8 +76,6 @@ export default function Parser(s: string): TKBType | null {
     }
 
     if (!match) return null;
-
-    console.log("Matched with:", dkMatched ? "DK" : "SV", match);
 
     for (let i = 1; i < match.length; i++) {
         if (!match[i]) continue;
