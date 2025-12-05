@@ -35,25 +35,26 @@ export interface TKBType {
     weekRange: {
         from: number;
         to: number;
-    }[]
+    }[];
 }
 
-const global = /^(?:(\d+)\t)?(?:([A-Za-z0-9.^\t]+)\t)?([^\t]+)\t(?:[^\t]*\t){3}([^\t]+)\t((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),\d+-\d+,[^\t]+)\t([\d+-;]+)/;
+const global =
+    /^(?:(\d+)\t)?(?:([A-Za-z0-9.^\t]+)\t)?([^\t]+)\t(?:[^\t]*\t){3}([^\t]+)\t((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),\d+-\d+,[^\t]+)\t([\d+-;]+)/;
 
 const rgx = {
     id: /^(?=.*\d)(?=.*\.)[A-Za-z0-9.]+$/g,
     dates: /((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),\d+-\d+,[^\t;]+)/gm,
     date: /(?:Thứ (\d+)|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),(\d+)-(\d+),(.+)$/,
     weekRange: /(\d+)-(\d+)/,
-    weeksRange: /[\d+-;]+/
+    weeksRange: /[\d+-;]+/,
 };
 
 export default function Parser(s: string): TKBType | null {
     let id = "",
         name = "",
         instructor = "";
-    const time: TKBType['time'] = [],
-        weekRange: TKBType['weekRange'] = []
+    const time: TKBType["time"] = [],
+        weekRange: TKBType["weekRange"] = [];
 
     const match = global.exec(s);
 
@@ -82,7 +83,7 @@ export default function Parser(s: string): TKBType | null {
                 date: dateArr[1] ? parseInt(dateArr[1], 10) : 8,
                 class: dateArr[4],
                 lsStart: parseInt(dateArr[2]),
-                lsEnd: parseInt(dateArr[3])
+                lsEnd: parseInt(dateArr[3]),
             });
         }
 
@@ -90,7 +91,7 @@ export default function Parser(s: string): TKBType | null {
 
         if (!weekRangeMatches) continue;
 
-        const weekRangeArr = weekRangeMatches[0].split(';');
+        const weekRangeArr = weekRangeMatches[0].split(";");
 
         for (const weekRangeStr of weekRangeArr) {
             const weekRangeMatch = rgx.weekRange.exec(weekRangeStr);
@@ -99,7 +100,7 @@ export default function Parser(s: string): TKBType | null {
 
             weekRange.push({
                 from: parseInt(weekRangeMatch[1]),
-                to: parseInt(weekRangeMatch[2])
+                to: parseInt(weekRangeMatch[2]),
             });
         }
         break;
@@ -110,6 +111,6 @@ export default function Parser(s: string): TKBType | null {
         name,
         instructor,
         time,
-        weekRange
+        weekRange,
     };
 }

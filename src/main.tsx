@@ -22,48 +22,56 @@
  * SOFTWARE.
  */
 
-import { ReactNode, StrictMode, useEffect, useState } from 'react'
-import { createRoot } from 'react-dom/client';
+import { ReactNode, StrictMode, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
 import "@radix-ui/themes/styles.css";
 import "@fontsource/inter/300.css";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
 import "@fontsource/inter/700.css";
-import './index.scss';
-import App from './App'
-import { Theme } from '@radix-ui/themes';
-import { ThemeProvider } from './context/ThemeContext';
+import "./index.scss";
+import App from "./App";
+import { Theme } from "@radix-ui/themes";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // why we need lint for main file heh?
 // eslint-disable-next-line react-refresh/only-export-components
 const ThemeMatcher = ({ children }: { children: ReactNode }) => {
-  const [mode, setMode] = useState<'dark' | 'light' | 'system'>(localStorage.getItem('mode') as 'dark' | 'light' | 'system' || 'system');
-  const [theme, setTheme] = useState<'dark' | 'light'>(mode === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
+    const [mode, setMode] = useState<"dark" | "light" | "system">(
+        (localStorage.getItem("mode") as "dark" | "light" | "system") || "system",
+    );
+    const [theme, setTheme] = useState<"dark" | "light">(
+        mode === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : mode,
+    );
 
-  useEffect(() => {
-    if (mode !== 'system') {
-      return;
-    }
-    const matcher = window.matchMedia('(prefers-color-scheme: dark)');
-    const listener = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
-    matcher.addEventListener('change', listener);
-    return () => matcher.removeEventListener('change', listener);
-  }, [mode]);
+    useEffect(() => {
+        if (mode !== "system") {
+            return;
+        }
+        const matcher = window.matchMedia("(prefers-color-scheme: dark)");
+        const listener = (e: MediaQueryListEvent) => setTheme(e.matches ? "dark" : "light");
+        matcher.addEventListener("change", listener);
+        return () => matcher.removeEventListener("change", listener);
+    }, [mode]);
 
-  useEffect(() => {
-    localStorage.setItem('mode', mode);
-    setTheme(mode === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : mode);
-  }, [mode]);
+    useEffect(() => {
+        localStorage.setItem("mode", mode);
+        setTheme(
+            mode === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : mode,
+        );
+    }, [mode]);
 
-  return <ThemeProvider value={{ mode, setMode }}>
-    <Theme appearance={theme}>{children}</Theme>
-  </ThemeProvider>
-}
+    return (
+        <ThemeProvider value={{ mode, setMode }}>
+            <Theme appearance={theme}>{children}</Theme>
+        </ThemeProvider>
+    );
+};
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ThemeMatcher>
-      <App />
-    </ThemeMatcher>
-  </StrictMode>,
-)
+createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+        <ThemeMatcher>
+            <App />
+        </ThemeMatcher>
+    </StrictMode>,
+);

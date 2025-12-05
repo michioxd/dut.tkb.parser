@@ -25,11 +25,11 @@
 import { createContext, useContext } from "react";
 
 export const ThemeContext = createContext<{
-    mode: 'dark' | 'light' | 'system';
-    setMode: (mode: 'dark' | 'light' | 'system') => void;
+    mode: "dark" | "light" | "system";
+    setMode: (mode: "dark" | "light" | "system") => void;
 }>({
-    mode: 'system',
-    setMode: () => { }
+    mode: "system",
+    setMode: () => {},
 });
 
 export const ThemeProvider = ThemeContext.Provider;
@@ -37,4 +37,4 @@ export const ThemeProvider = ThemeContext.Provider;
 export const useTheme = () => {
     const context = useContext(ThemeContext);
     return context;
-}
+};
