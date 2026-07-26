@@ -125,6 +125,11 @@ const initialCalendarExportData = {
     weekStartDate: getNearestMonday(),
 };
 
+const getMinWeekNumber = (scheduleData: TKBType[]): number =>
+    scheduleData.length > 0
+        ? Math.min(...scheduleData.flatMap((schedule) => schedule.weekRange.map((range) => range.from)))
+        : 1;
+
 export default function App() {
     const { mode, setMode } = useTheme();
     const [byWeek, setByWeek] = useState(localStorage.getItem("byWeek") === "true" || false);
@@ -182,6 +187,13 @@ export default function App() {
 
         return d;
     }, [data]);
+
+    useEffect(() => {
+        setCalendarExportData((prev) => ({
+            ...prev,
+            weekNumber: getMinWeekNumber(scheduleData),
+        }));
+    }, [scheduleData]);
 
     const resetCustomForm = () => {
         setCustomData(initialCustomData);
