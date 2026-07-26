@@ -41,6 +41,9 @@ export interface TKBType {
 const dkRegex =
     /^(?:(\d+)\t)?(?:([A-Za-z0-9.^\t]+)\t)?([^\t]+)\t(?:[^\t]*\t){1}([^\t]+)\t((?:(?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[:,]\s*\d+-\d+,[^\t;]+|(?:\d+:\s*\d+-\d+,[^\t;]+))+(?:;(?:\s*(?:Thứ \d+[,:]\s*|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt][,:]\s*)?(?:\d+:\s*)?\d+-\d+,[^\t;]+))*)\t([\d+-;]+)/;
 
+const dkNewRegex =
+    /^(?:(\d+)\t)?([A-Za-z0-9.^]+)\t[^\S\r\n]*\r?\n([^\r\n]+)\r?\n(?:[^\t\r\n]*\t)([^\t\r\n]+)\t((?:(?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt])[:,]\s*\d+-\d+,[^\t;\r\n]+|(?:\d+:\s*\d+-\d+,[^\t;\r\n]+))+(?:;(?:\s*(?:Thứ \d+[,:]\s*|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt][,:]\s*)?(?:\d+:\s*)?\d+-\d+,[^\t;\r\n]+))*)\t([\d+-;]+)/;
+
 const global =
     /^(?:(\d+)\t)?(?:([A-Za-z0-9.^\t]+)\t)?([^\t]+)\t(?:[^\t]*\t){3}([^\t]+)\t((?:Thứ \d+|[Cc][Hh][Ủủ][ ]?[Nn][Hh][Ậậ][Tt]),\d+-\d+,[^\t]+)\t([\d+-;]+)/;
 
@@ -61,6 +64,9 @@ const svRgx = {
 };
 
 export default function Parser(s: string): TKBType | null {
+    const lines = s.replace(/\r\n/g, "\n").split("\n");
+    const normalizedInput =
+        lines.length >= 3 && /^\d+\t[A-Za-z0-9.^]+\t?\s*$/.test(lines[0]) ? lines.slice(0, 3).join("\n") : s;
     let id = "",
         name = "",
         instructor = "";
@@ -68,11 +74,16 @@ export default function Parser(s: string): TKBType | null {
         weekRange: TKBType["weekRange"] = [];
 
     let dkMatched = false;
-    let match = global.exec(s);
+    let match = global.exec(normalizedInput);
 
     if (!match) {
         dkMatched = true;
-        match = dkRegex.exec(s);
+        match = dkNewRegex.exec(normalizedInput);
+    }
+
+    if (!match) {
+        dkMatched = true;
+        match = dkRegex.exec(normalizedInput);
     }
 
     if (!match) return null;

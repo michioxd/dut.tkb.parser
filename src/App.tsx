@@ -29,6 +29,7 @@ import {
     Card,
     Checkbox,
     Container,
+    Dialog,
     Flex,
     IconButton,
     Link,
@@ -41,6 +42,7 @@ import {
 } from "@radix-ui/themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Footer from "./components/Footer";
+import { downloadGoogleCalendarIcs } from "./core/export";
 import Parser, { TKBType } from "./core/parser";
 import timeRange from "./core/range";
 import html2canvas from "html2canvas-pro";
@@ -54,7 +56,6 @@ import {
     ExternalLinkIcon,
     InfoCircledIcon,
     MoonIcon,
-    OpenInNewWindowIcon,
     PlusIcon,
     ResetIcon,
     SunIcon,
@@ -63,6 +64,25 @@ import { Base64 } from "js-base64";
 
 const genBg = (name: string): string =>
     `hsl(${name.split("").reduce((h, c) => (h + c.charCodeAt(0)) % 360, 0)}, 70%, 50%, 0.15)`;
+
+const splitScheduleInput = (input: string): string[] => {
+    const lines = input.replace(/\r\n/g, "\n").split("\n");
+    const records: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i] === "") continue;
+
+        if (/^\d+\t[A-Za-z0-9.^]+\t?\s*$/.test(lines[i]) && i + 2 < lines.length) {
+            records.push(lines.slice(i, i + 3).join("\n"));
+            i += 2;
+            continue;
+        }
+
+        records.push(lines[i]);
+    }
+
+    return records;
+};
 
 const initialCustomData = {
     name: "",
@@ -74,6 +94,35 @@ const initialCustomData = {
     end: 10,
     weekFrom: 1,
     weekTo: 2,
+};
+
+const toDateInputValue = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+};
+
+const getNearestMonday = (): string => {
+    const today = new Date();
+    const nextMondayOffset = (1 - today.getDay() + 7) % 7;
+    const previousMondayOffset = nextMondayOffset - 7;
+    const monday = new Date(today);
+
+    monday.setDate(
+        today.getDate() +
+            (Math.abs(previousMondayOffset) < Math.abs(nextMondayOffset) ? previousMondayOffset : nextMondayOffset),
+    );
+
+    return toDateInputValue(monday);
+};
+
+const mondayDateStepBase = "1970-01-05";
+
+const initialCalendarExportData = {
+    weekNumber: 1,
+    weekStartDate: getNearestMonday(),
 };
 
 export default function App() {
@@ -92,6 +141,7 @@ export default function App() {
     const [zoomRatio, setZoomRatio] = useState(1);
 
     const [customData, setCustomData] = useState(initialCustomData);
+    const [calendarExportData, setCalendarExportData] = useState(initialCalendarExportData);
 
     useEffect(() => {
         localStorage.setItem("data", data);
@@ -123,16 +173,12 @@ export default function App() {
 
     const scheduleData = useMemo<TKBType[]>(() => {
         const d: TKBType[] = [];
-        data.replace(/\r\n/g, "\n")
-            .split("\n")
-            .map((line) => {
-                if (line === "") return null;
-
-                const parser = Parser(line);
-                if (parser) {
-                    d.push(parser);
-                }
-            });
+        splitScheduleInput(data).map((line) => {
+            const parser = Parser(line);
+            if (parser) {
+                d.push(parser);
+            }
+        });
 
         return d;
     }, [data]);
@@ -200,6 +246,10 @@ export default function App() {
         setData((prev) => prev + "\n" + customLessonString);
         resetCustomForm();
     }, [customData]);
+
+    const handleExportGoogleCalendar = useCallback(() => {
+        downloadGoogleCalendarIcs(scheduleData, calendarExportData);
+    }, [scheduleData, calendarExportData]);
 
     const dt = useMemo(
         () => (
@@ -312,6 +362,15 @@ export default function App() {
     return (
         <>
             <Container size="4">
+                <Callout.Root color="green" size="1" style={{ margin: "1rem", display: hidePanel ? "none" : "flex" }}>
+                    <Callout.Icon>
+                        <InfoCircledIcon />
+                    </Callout.Icon>
+                    <Callout.Text>
+                        <b>Cập nhật 26/07/2026:</b> Đã hỗ trợ thời khoá biểu từ website đăng ký học phần mới. Thêm tuỳ
+                        chọn xuất ra file .ics (có thể import vào Google Calendar).
+                    </Callout.Text>
+                </Callout.Root>
                 <Card
                     my="3"
                     mx="3"
@@ -349,14 +408,6 @@ export default function App() {
                             Tất cả các khâu xử lí đều được thực hiện hoàn toàn trên trình duyệt của bạn không thông qua
                             máy chủ thứ 3 nào. Thời khoá biểu đã nhập sẽ tự động lưu vào bộ nhớ của trình duyệt.
                         </Text>
-                        <Callout.Root color="green" size="1">
-                            <Callout.Icon>
-                                <InfoCircledIcon />
-                            </Callout.Icon>
-                            <Callout.Text>
-                                <b>Cập nhật 5/12/2025:</b> Đã hỗ trợ thời khoá biểu từ website đăng ký học phần.
-                            </Callout.Text>
-                        </Callout.Root>
                         <TextArea
                             size="1"
                             value={data}
@@ -456,7 +507,7 @@ export default function App() {
                                     </Popover.Content>
                                 </Popover.Root>
                                 <Button
-                                    variant="soft"
+                                    variant="solid"
                                     disabled={scheduleData.length < 1 || saving}
                                     loading={saving}
                                     onClick={handleSaveImage}
@@ -464,6 +515,77 @@ export default function App() {
                                     <DownloadIcon />
                                     Lưu thành ảnh
                                 </Button>
+                                <Dialog.Root>
+                                    <Dialog.Trigger>
+                                        <Button variant="soft" disabled={scheduleData.length < 1}>
+                                            <DownloadIcon />
+                                            Google Calendar
+                                        </Button>
+                                    </Dialog.Trigger>
+                                    <Dialog.Content maxWidth="420px">
+                                        <Dialog.Title>Xuất qua Google Calendar</Dialog.Title>
+                                        <Dialog.Description size="2" color="gray">
+                                            Chọn tuần mốc và ngày bắt đầu của tuần đó. File .ics tải về có thể import
+                                            vào Google Calendar.
+                                        </Dialog.Description>
+
+                                        <Flex direction="column" gap="3" mt="4">
+                                            <Flex direction="column" gap="1">
+                                                <Text size="1">Ngày bắt đầu tuần</Text>
+                                                <Flex gap="2" align="center">
+                                                    <Text>Tuần</Text>
+                                                    <TextField.Root
+                                                        type="number"
+                                                        min="1"
+                                                        value={calendarExportData.weekNumber}
+                                                        onChange={(e) =>
+                                                            setCalendarExportData((prev) => ({
+                                                                ...prev,
+                                                                weekNumber: parseInt(e.target.value) || 1,
+                                                            }))
+                                                        }
+                                                        style={{ width: "5rem" }}
+                                                    />
+                                                    <Text>là</Text>
+                                                    <TextField.Root
+                                                        type="date"
+                                                        min={mondayDateStepBase}
+                                                        step="7"
+                                                        value={calendarExportData.weekStartDate}
+                                                        onChange={(e) =>
+                                                            setCalendarExportData((prev) => ({
+                                                                ...prev,
+                                                                weekStartDate: e.target.value,
+                                                            }))
+                                                        }
+                                                    />
+                                                </Flex>
+                                                <Text size="1" color="gray">
+                                                    Ô ngày chỉ cho chọn các ngày cách nhau 7 ngày từ ngày bắt đầu mặc
+                                                    định.
+                                                </Text>
+                                            </Flex>
+
+                                            <Flex gap="2" justify="end">
+                                                <Dialog.Close>
+                                                    <Button variant="soft" color="gray">
+                                                        Huỷ
+                                                    </Button>
+                                                </Dialog.Close>
+                                                <Dialog.Close>
+                                                    <Button
+                                                        variant="soft"
+                                                        onClick={handleExportGoogleCalendar}
+                                                        disabled={!calendarExportData.weekStartDate}
+                                                    >
+                                                        <DownloadIcon />
+                                                        Tải file .ics
+                                                    </Button>
+                                                </Dialog.Close>
+                                            </Flex>
+                                        </Flex>
+                                    </Dialog.Content>
+                                </Dialog.Root>
                                 <Popover.Root>
                                     <Popover.Trigger>
                                         <Button variant="soft" color="green">
@@ -639,14 +761,6 @@ export default function App() {
                                 </IconButton>
                             </Tooltip>
                         </Flex>
-                        <Link
-                            size="1"
-                            href="https://gist.github.com/michioxd/91a580d34a3478c8985309758e150b93"
-                            target="_blank"
-                            style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}
-                        >
-                            better dkDUT (user script) <OpenInNewWindowIcon />
-                        </Link>
                     </Flex>
                 </Card>
                 {scheduleData.length > 0 && (
