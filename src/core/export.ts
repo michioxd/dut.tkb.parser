@@ -55,12 +55,27 @@ const getLocation = (className: string): string => {
     return className + " - Trường Đại học Bách Khoa - Đại học Đà Nẵng";
 };
 
+const hslToHex = (h: number, s: number, l: number): string => {
+    s /= 100;
+    l /= 100;
+    const k = (n: number) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))));
+    return `#${f(0).toString(16).padStart(2, "0")}${f(8).toString(16).padStart(2, "0")}${f(4).toString(16).padStart(2, "0")}`;
+};
+
+const genEventColor = (name: string): string => {
+    const hue = name.split("").reduce((h, c) => (h + c.charCodeAt(0)) % 360, 0);
+    return hslToHex(hue, 70, 50);
+};
+
 export function createGoogleCalendarIcs(scheduleData: TKBType[], options: GoogleCalendarExportOptions): string {
     const baseDate = parseInputDate(options.weekStartDate);
     const now = toIcsDateTime(new Date(), new Date().getHours(), new Date().getMinutes());
     const events: string[] = [];
 
     for (const lesson of scheduleData) {
+        const color = genEventColor(lesson.name);
         for (const time of lesson.time) {
             const startLesson = timeRange.find((range) => range.lessonNumber === time.lsStart);
             const endLesson = timeRange.find((range) => range.lessonNumber === time.lsEnd);
@@ -84,6 +99,8 @@ export function createGoogleCalendarIcs(scheduleData: TKBType[], options: Google
                             `SUMMARY:${escapeIcsText(lesson.name)}`,
                             `LOCATION:${escapeIcsText(getLocation(time.class))}`,
                             `DESCRIPTION:${escapeIcsText(`Giảng viên: ${lesson.instructor}\nMã lớp: ${lesson.id}\nTuần: ${currentWeek}/${range.to}`)}`,
+                            `COLOR:${color}`,
+                            `X-APPLE-CALENDAR-COLOR:${color}`,
                             "END:VEVENT",
                         ].join("\r\n"),
                     );
