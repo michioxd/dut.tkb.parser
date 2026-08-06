@@ -118,7 +118,7 @@ const getNearestMonday = (): string => {
     return toDateInputValue(monday);
 };
 
-const mondayDateStepBase = "1970-01-05";
+const mondayDateStepBase = "2026-08-10";
 
 const initialCalendarExportData = {
     weekNumber: 1,
@@ -537,11 +537,19 @@ export default function App() {
                                             Google Calendar
                                         </Button>
                                     </Dialog.Trigger>
-                                    <Dialog.Content maxWidth="420px">
-                                        <Dialog.Title>Xuất qua Google Calendar</Dialog.Title>
+                                    <Dialog.Content maxWidth="600px">
+                                        <Dialog.Title>Xuất ra tệp .ics</Dialog.Title>
                                         <Dialog.Description size="2" color="gray">
-                                            Chọn tuần mốc và ngày bắt đầu của tuần đó. File .ics tải về có thể import
-                                            vào Google Calendar.
+                                            Bạn có thể xuất ra tệp .ics để import vào Google Calendar hoặc các ứng dụng
+                                            lịch khác. Chọn tuần mốc và ngày bắt đầu của tuần đó.{" "}
+                                            <Link
+                                                href="https://en.wikipedia.org/wiki/ICalendar"
+                                                target="_blank"
+                                                style={{ color: "inherit" }}
+                                            >
+                                                File .ics là gì? <ExternalLinkIcon />
+                                            </Link>
+                                            .
                                         </Dialog.Description>
 
                                         <Flex direction="column" gap="3" mt="4">
@@ -575,9 +583,17 @@ export default function App() {
                                                         }
                                                     />
                                                 </Flex>
-                                                <Text size="1" color="gray">
-                                                    Ô ngày chỉ cho chọn các ngày cách nhau 7 ngày từ ngày bắt đầu mặc
-                                                    định.
+                                                <Text size="1" color="gray" mt="2">
+                                                    Sau khi xuất ra file .ics, hãy import vào Google Calendar hoặc các
+                                                    ứng dụng lịch tương tự (iCloud Calendar, Exchange,...).{" "}
+                                                    <Link
+                                                        href="https://support.google.com/calendar/answer/37118?hl=vi"
+                                                        target="_blank"
+                                                        style={{ color: "inherit" }}
+                                                    >
+                                                        Xem hướng dẫn import vào Google Calendar <ExternalLinkIcon />
+                                                    </Link>
+                                                    .
                                                 </Text>
                                             </Flex>
 

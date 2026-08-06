@@ -49,6 +49,12 @@ const toIcsDateTime = (date: Date, hour: number, minute: number): string =>
 const escapeIcsText = (text: string): string =>
     text.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
 
+const getLocation = (className: string): string => {
+    if (className.includes("GDTC")) return "Khoa Giáo dục Thể chất - Đại học Đà Nẵng";
+
+    return className + " - Trường Đại học Bách Khoa - Đại học Đà Nẵng";
+};
+
 export function createGoogleCalendarIcs(scheduleData: TKBType[], options: GoogleCalendarExportOptions): string {
     const baseDate = parseInputDate(options.weekStartDate);
     const now = toIcsDateTime(new Date(), new Date().getHours(), new Date().getMinutes());
@@ -76,8 +82,8 @@ export function createGoogleCalendarIcs(scheduleData: TKBType[], options: Google
                             `DTSTART:${dtStart}`,
                             `DTEND:${dtEnd}`,
                             `SUMMARY:${escapeIcsText(lesson.name)}`,
-                            `LOCATION:${escapeIcsText(time.class)}`,
-                            `DESCRIPTION:${escapeIcsText(`Giảng viên: ${lesson.instructor}\nMã lớp: ${lesson.id}\nTuần: ${currentWeek}`)}`,
+                            `LOCATION:${escapeIcsText(getLocation(time.class))}`,
+                            `DESCRIPTION:${escapeIcsText(`Giảng viên: ${lesson.instructor}\nMã lớp: ${lesson.id}\nTuần: ${currentWeek}/${range.to}`)}`,
                             "END:VEVENT",
                         ].join("\r\n"),
                     );
@@ -89,7 +95,7 @@ export function createGoogleCalendarIcs(scheduleData: TKBType[], options: Google
     return [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//dut.tkb.parser//VI",
+        "PRODID:-//michioxd.ch//dut.tkb.parser//VI",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         ...events,
@@ -103,7 +109,7 @@ export function downloadGoogleCalendarIcs(scheduleData: TKBType[], options: Goog
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = `dut-tkb-google-calendar-${Date.now()}.ics`;
+    link.download = `dut-tkb-${Date.now()}.ics`;
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
