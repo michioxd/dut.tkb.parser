@@ -189,10 +189,11 @@ export default function App() {
     }, [data]);
 
     useEffect(() => {
-        setCalendarExportData((prev) => ({
-            ...prev,
-            weekNumber: getMinWeekNumber(scheduleData),
-        }));
+        (() =>
+            setCalendarExportData((prev) => ({
+                ...prev,
+                weekNumber: getMinWeekNumber(scheduleData),
+            })))();
     }, [scheduleData]);
 
     const resetCustomForm = () => {
@@ -357,17 +358,19 @@ export default function App() {
         const query = new URLSearchParams(window.location.search);
         const dataParam = query.get("data");
         if (dataParam) {
-            setData(Base64.decode(dataParam));
-            query.delete("data");
-            window.history.replaceState(
-                {},
-                document.title,
-                window.location.protocol +
-                    "//" +
-                    window.location.host +
-                    window.location.pathname +
-                    (query.toString() ? "?" + query.toString() : ""),
-            );
+            (() => {
+                setData(Base64.decode(dataParam));
+                query.delete("data");
+                window.history.replaceState(
+                    {},
+                    document.title,
+                    window.location.protocol +
+                        "//" +
+                        window.location.host +
+                        window.location.pathname +
+                        (query.toString() ? "?" + query.toString() : ""),
+                );
+            })();
         }
     }, []);
 
